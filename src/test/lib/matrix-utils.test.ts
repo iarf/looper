@@ -6,11 +6,12 @@ describe ("MatrixUtils", () => {
             const answer = MatrixUtils.sphericalToCartesian({
                 distance: 5,
                 azimuth: 60,
-                inclination: 30
+                inclination: -60
             })
+            
             expect(answer.x).toBeCloseTo(1.25, 4)
-            expect(answer.y).toBeCloseTo(2.1903, 4)
-            expect(answer.z).toBeCloseTo(4.3301, 4)
+            expect(answer.y).toBeCloseTo(2.1651, 4)
+            expect(answer.z).toBeCloseTo(-4.3301, 4)
 
         })
     })
