@@ -18,12 +18,19 @@ export default class MatrixUtils {
             z: spherical.distance * Math.cos(clinRad)
         }
     }
-    // public static cartesianToSpherical(cartesian: Vector3): SphericalLeg {
-    //     return {
-    //         distance: Math.sqrt(cartesian.x ^ 2 + cartesian.y ^ 2 + cartesian.z ^ 2),
-    //         azimuth: this.radToDeg(Math.atan(Math.sqrt(cartesian.x ^ 2 + cartesian.y ^ 2)))
-    //     }
-    // }
+    /**
+     * convert cartesian coordinates to spherical (note that inclination is relative to level rather than z-pole)
+     * @param cartesian 
+     * @returns 
+     */
+    public static cartesianToSpherical(cartesian: Vector3): SphericalLeg {
+        const magnitude = Math.sqrt(Math.pow(cartesian.x,2) + Math.pow(cartesian.y,2) + Math.pow(cartesian.z,2));
+        return {
+            distance: magnitude,
+            azimuth: this.radToDeg(Math.atan(cartesian.y/cartesian.x)),
+            inclination: 90 - this.radToDeg(Math.acos(cartesian.z / magnitude))
+        }
+    }
     /**
      * convert degrees to radians
      * @param deg 

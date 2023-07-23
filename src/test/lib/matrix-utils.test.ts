@@ -15,4 +15,17 @@ describe ("MatrixUtils", () => {
 
         })
     })
+    describe("cartesianToSpherical", () => {
+        it("should convert a vector to spherical coords", () => {
+            const answer = MatrixUtils.cartesianToSpherical({
+                x: 2,
+                y: 7,
+                z: 1
+            })
+
+            expect(answer.distance).toBeCloseTo(7.35);
+            expect(answer.azimuth).toBeCloseTo(74.05);
+            expect(answer.inclination).toBeCloseTo(7.82);
+        })
+    })
 })
