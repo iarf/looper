@@ -1,4 +1,5 @@
-import { Survey } from "./types";
+import MatrixUtils from "./lib/matrix-utils";
+import { LoopInfo, SphericalLeg, Survey, SurveyLeg, Vector3 } from "./types";
 export default class Looper {
     /**
      * Finds all loops within a survey, returns as a 2d matrix compromising lists of their stations
@@ -57,5 +58,71 @@ export default class Looper {
             surveyLinkedList.get(leg.to).add(leg.from);
         }
         return surveyLinkedList;
+    }
+    /**
+     * Analyzes provided loops and returns some simple stats
+     * @param survey 
+     * @param loops
+     */
+    public static analyzeLoops(survey: Survey, loops: string[][]): LoopInfo[] {
+        const analyzed: LoopInfo[] = [];
+        for (const loop of loops) {
+            // get an array of all shots used in the loop, transposed in the direction of the loop
+            const shots: SurveyLeg[] = [];
+            const shotVectors: Vector3[] = [];
+            let distance = 0;
+            for (let i = 0; i < loop.length; i ++) {
+                const next = i + 1 < loop.length ? i + 1 : 0;
+                // find shots equivalent to loop[i] -> loop[next] (stations)
+                const legShots: SurveyLeg[] = [];
+                for (const shot of survey) {
+                    if (shot.from == loop[i] && shot.to == loop[next]) legShots.push(shot)
+                    // invert shot if facing wrong way
+                    else if (shot.from == loop[next] && shot.to == loop[i]) {
+                        legShots.push({
+                            from: shot.to,
+                            to: shot.from,
+                            data: {
+                                distance: shot.data.distance,
+                                azimuth: (shot.data.azimuth + 180) % 360,
+                                inclination: - shot.data.inclination
+                            }
+                        })
+                    }
+                }
+                // average all shots providing data on current leg
+                const data: SphericalLeg =  {
+                    distance: legShots.map(leg => leg.data.distance).reduce((accumulator, current) => accumulator + current) / legShots.length,
+                    azimuth: legShots.map(leg => leg.data.azimuth).reduce((accumulator, current) => accumulator + current) / legShots.length,
+                    inclination: legShots.map(leg => leg.data.inclination).reduce((accumulator, current) => accumulator + current) / legShots.length
+                }
+                shots.push({
+                    from: loop[i],
+                    to: loop[next],
+                    data
+                })
+                shotVectors.push(MatrixUtils.sphericalToCartesian(data));
+                distance += data.distance;
+            }
+            // add up vectors to find closure error
+            const runningVector: Vector3 = {
+                x: 0,
+                y: 0,
+                z: 0
+            }
+            shotVectors.map(vector => {
+                runningVector.x += vector.x,
+                runningVector.y += vector.y,
+                runningVector.z += vector.z
+            });
+            const closureOffset = MatrixUtils.cartesianToSpherical(runningVector)
+            // conver
+            analyzed.push({
+                stations: loop,
+                distance,
+                closureOffset
+            })
+        }
+        return analyzed;
     }
 }
